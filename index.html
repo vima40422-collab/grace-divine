@@ -68,7 +68,7 @@
         <a href="https://www.google.com/maps/search/Restaurant+Grace+Divine+Abidjan" target="_blank" rel="noopener">Itinéraire</a>
         <a href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook</a>
       </nav>
-      <button class="admin-btn" type="button" onclick="openAdmin()">🔧 Admin</button>
+      <button class="admin-btn" type="button" onclick="openAdmin()"> Admin</button>
     </div>
   </header>
 
@@ -162,9 +162,8 @@
 
       <div class="cart-actions">
         <button id="clearCart" type="button" onclick="clearCart()">🗑️ Vider le panier</button>
-        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250143906867" target="_blank" rel="noopener" onclick="return sendWhatsAppOrder(event);">📩 Commander via WhatsApp</a>
-        <button id="downloadTicket" type="button" onclick="downloadTicketImage('png')" style="background:#333;color:white;">🖼️ Télécharger ticket .PNG</button>
-        <button id="downloadTicketJpg" type="button" onclick="downloadTicketImage('jpg')" style="background:#555;color:white;">📷 Télécharger ticket .JPG</button>
+        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250713172906" target="_blank" rel="noopener" onclick="return sendWhatsAppOrder(event);">📩 Commander via WhatsApp</a>
+        <button id="downloadTicket" type="button" onclick="downloadTicketImage()" style="background:#333;color:white;">🖼️ Télécharger ticket .PNG</button>
       </div>
 
       <div class="ticket" id="ticketSection" aria-live="polite" style="margin-top: 14px; padding: 12px; background: #fff9eb; border: 1px solid #ffd59a; border-radius: 8px; display: none;">
@@ -374,7 +373,7 @@
       });
       text += `%0ATotal: ${formatFCFA(total)} FCFA`;
       if (selectedPayment) text += `%0APaiement: ${selectedPayment}`;
-      whatsapp.href = `https://wa.me/2250143906867?text=${encodeURIComponent(text)}`;
+      whatsapp.href = `https://wa.me/2250713172906?text=${encodeURIComponent(text)}`;
     }
 
     function createTicketCanvas(ticketText) {
@@ -512,7 +511,7 @@
         `🛒 Commande :\n${ticketLines}\n` +
         `---\n` +
         `💰 Total : ${formatFCFA(total)} FCFA\n` +
-        `🙏 Merci pour votre commande !`;
+        `  Merci pour votre commande !`;
 
       // Génération de l'image ticket (PNG par défaut)
       generateTicketImageFromText(ticketText);
@@ -535,7 +534,7 @@
       document.getElementById('ticketContent').textContent = ticketText;
 
       const whatsappLink = document.getElementById('whatsappLink');
-      whatsappLink.href = `https://wa.me/2250143906867?text=${encodeURIComponent(ticketText)}`;
+      whatsappLink.href = `https://wa.me/2250713172906?text=${encodeURIComponent(ticketText)}`;
 
       alert('Un ticket a été généré et sera partagé via WhatsApp.');
 
@@ -547,7 +546,7 @@
       return true;
     }
 
-    function downloadTicketImage(format = 'png') {
+    function downloadTicketImage() {
       const ticketSection = document.getElementById('ticketSection');
       if (ticketSection.style.display === 'none') {
         alert('Veuillez générer d\'abord le ticket en cliquant sur Commander via WhatsApp.');
@@ -561,13 +560,11 @@
       }
 
       const canvas = createTicketCanvas(ticketText);
-      const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
-      const extension = format === 'jpg' ? 'jpg' : 'png';
-      const dataUrl = canvas.toDataURL(mime, 0.92);
+      const dataUrl = canvas.toDataURL('image/png', 0.92);
 
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `ticket_grace_divine_${Date.now()}.${extension}`;
+      link.download = `ticket_grace_divine_${Date.now()}.png`;
       link.click();
       link.remove();
     }
