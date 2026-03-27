@@ -140,6 +140,10 @@
       <div id="cartItems" class="cart-items" aria-live="polite">Votre panier est vide.</div>
       <div class="total"><strong>Total :</strong> <span id="cartTotal">0</span> FCFA</div>
 
+      <h3>Informations client</h3>
+      <input type="text" id="customerName" placeholder="Votre nom" aria-label="Nom du client" style="margin-bottom:8px;padding:8px;border:1px solid #ccc;border-radius:8px;width:100%;" />
+      <input type="tel" id="phoneNumber" placeholder="Numéro de téléphone (ex: 0700000000)" aria-label="Numéro de téléphone" style="margin-bottom:8px;padding:8px;border:1px solid #ccc;border-radius:8px;width:100%;" />
+
       <h3>Choisir paiement</h3>
       <div id="paymentMethods">
         <label class="payment-option" for="orangeMoney">
@@ -155,7 +159,6 @@
           <input id="cardPay" type="radio" name="payment" value="Carte Bancaire" onchange="selectPayment(event)" /> Carte Bancaire
         </label>
       </div>
-      <input type="tel" id="phoneNumber" placeholder="Numéro de téléphone (ex: 0700000000)" aria-label="Numéro de téléphone" />
 
       <div class="cart-actions">
         <button id="clearCart" type="button" onclick="clearCart()">🗑️ Vider le panier</button>
@@ -188,12 +191,19 @@
               <div class="number" id="adminTotalRevenue" style="font-size:28px;font-weight:bold;">0 FCFA</div>
             </div>
           </div>
+          <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
+            <button type="button" onclick="exportOrdersCSV()" style="background:#0069d9;color:white;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;">📤 Export CSV</button>
+            <span style="font-size:0.9rem;color:#444">Actions administrateur</span>
+          </div>
 
           <section style="margin-bottom:18px;">
             <h3>➕ Mettre un plat en ligne</h3>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;margin-top:8px;">
               <input id="newDishName" type="text" placeholder="Nom du plat" style="padding:8px;border:1px solid #ccc;border-radius:8px;" />
               <input id="newDishPrice" type="number" placeholder="Prix (FCFA)" style="padding:8px;border:1px solid #ccc;border-radius:8px;" />
+            </div>
+            <div style="margin-top:8px;">
+              <input id="newDishPhoto" type="url" placeholder="URL photo (https://...)" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:8px;" />
             </div>
             <button type="button" onclick="addDish()" style="margin-top:10px;padding:10px 14px;background:#ff6600;color:white;border:none;border-radius:8px;cursor:pointer;">Ajouter le plat</button>
             <div id="addDishMessage" style="margin-top:8px;color:#333;font-weight:600;"></div>
@@ -245,6 +255,7 @@
     function addDish() {
       const name = document.getElementById('newDishName').value.trim();
       const price = Number(document.getElementById('newDishPrice').value);
+      const photoUrl = document.getElementById('newDishPhoto').value.trim();
       const msg = document.getElementById('addDishMessage');
       if (!name || !price || price <= 0) {
         msg.textContent = 'Veuillez saisir un nom et un prix valides.';
@@ -256,8 +267,9 @@
       card.className = 'card';
       card.dataset.name = name;
       card.dataset.price = price;
+      const imageSrc = photoUrl || 'https://images.unsplash.com/photo-1498575207490-31f0b8c255b8?auto=format&fit=crop&w=800&q=80';
       card.innerHTML = `
-        <img src="https://images.unsplash.com/photo-1498575207490-31f0b8c255b8?auto=format&fit=crop&w=800&q=80" alt="${name}" loading="lazy" />
+        <img src="${imageSrc}" alt="${name}" loading="lazy" />
         <div class="card-content">
           <h3>${name}</h3>
           <p class="price">${price.toLocaleString('fr-FR')} FCFA</p>
@@ -267,6 +279,7 @@
       menuGrid.appendChild(card);
       document.getElementById('newDishName').value = '';
       document.getElementById('newDishPrice').value = '';
+      document.getElementById('newDishPhoto').value = '';
       msg.textContent = `Plat "${name}" ajouté à la carte.`;
       msg.style.color = '#155724';
     }
@@ -284,12 +297,43 @@
       orderList.innerHTML = orders.map(o =>
         `<div style="border-bottom:1px solid #ddd; margin-bottom:8px; padding-bottom:8px;">
           <strong>#${o.id}</strong> - ${o.date}<br>
+          Client: ${o.customerName || 'Inconnu'}<br>
           ${o.items.map(i => `${i.name} x${i.qty}`).join(', ')}<br>
           Total: ${o.total.toLocaleString('fr-FR')} FCFA<br>
           Paiement: ${o.paymentMethod}<br>
-          Téléphone: ${o.phone}
+          Téléphone: ${o.phone}<br>
+          Statut: <strong>${o.status}</strong><br>
+          <button style="margin-top:6px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;" onclick="updateOrderStatus('${o.id}','completed')">✅ Terminé</button>
+          <button style="margin:0 4px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;" onclick="updateOrderStatus('${o.id}','cancelled')">❌ Annulé</button>
         </div>`
       ).join('');
+    }
+
+    function updateOrderStatus(orderId, status) {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      order.status = status;
+      saveOrders();
+    }
+
+    function exportOrdersCSV() {
+      if (!orders.length) {
+        alert('Aucune commande à exporter.');
+        return;
+      }
+      const header = ['id', 'date', 'customerName', 'phone', 'paymentMethod', 'status', 'total', 'items'];
+      const rows = orders.map(o => {
+        const items = o.items.map(i => `${i.name} x${i.qty}`).join(' | ');
+        return [o.id, o.date, o.customerName, o.phone, o.paymentMethod, o.status, o.total, items];
+      });
+      const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+      const link = document.createElement('a');
+      link.href = 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURIComponent(csv);
+      link.download = `grace_divine_orders_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
 
     function renderCart() {
@@ -315,15 +359,17 @@
       cartTotal.textContent = formatFCFA(total);
       messageBox.textContent = `${cart.length} article(s) dans le panier.`;
 
+      const customerName = document.getElementById('customerName').value.trim();
       const phone = document.getElementById('phoneNumber').value.trim();
       const whatsapp = document.getElementById('whatsappLink');
       let text = `Bonjour, je voudrais commander :%0A`;
+      if (customerName) text += `Client : ${customerName}%0A`;
+      if (phone) text += `Téléphone : ${phone}%0A`;
       cart.forEach(item => {
         text += `• ${item.name} x${item.qty} = ${formatFCFA(item.price * item.qty)} FCFA%0A`;
       });
       text += `%0ATotal: ${formatFCFA(total)} FCFA`;
       if (selectedPayment) text += `%0APaiement: ${selectedPayment}`;
-      if (phone) text += `%0ATéléphone: ${phone}`;
       whatsapp.href = `https://wa.me/2250143906867?text=${encodeURIComponent(text)}`;
     }
 
@@ -357,6 +403,8 @@
     function submitOrder() {
       if (!cart.length) { alert('Votre panier est vide.'); return false; }
       if (!selectedPayment) { alert('Choisissez un moyen de paiement.'); return false; }
+      const customerName = document.getElementById('customerName').value.trim();
+      if (!customerName) { alert('Veuillez indiquer votre nom.'); return false; }
       const phone = document.getElementById('phoneNumber').value.trim();
       if (!phone) { alert('Veuillez renseigner votre numéro de téléphone.'); return false; }
 
@@ -367,7 +415,8 @@
       const ticketLines = cart.map(item => `- ${item.name} x${item.qty} : ${formatFCFA(item.price * item.qty)} FCFA`).join('\n');
       const ticketText = `🎫 Ticket de commande #${ticketId}\n` +
         `🕒 Date : ${orderTime}\n` +
-        `📱 Client : ${phone}\n` +
+        `👤 Nom client : ${customerName}\n` +
+        `📱 Téléphone : ${phone}\n` +
         `💳 Paiement : ${selectedPayment}\n` +
         `\nCommande :\n${ticketLines}\n` +
         `\n💰 Total : ${formatFCFA(total)} FCFA\n` +
@@ -377,10 +426,12 @@
       const order = {
         id: ticketId,
         date: orderTime,
+        customerName,
         items: cart.map(item => ({ name: item.name, qty: item.qty, price: item.price })),
         total,
         paymentMethod: selectedPayment,
         phone,
+        status: 'pending'
       };
       orders.unshift(order);
       saveOrders();
