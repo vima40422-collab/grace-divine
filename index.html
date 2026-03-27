@@ -68,6 +68,7 @@
         <a href="https://www.google.com/maps/search/Restaurant+Grace+Divine+Abidjan" target="_blank" rel="noopener">Itinéraire</a>
         <a href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook</a>
       </nav>
+      <button class="admin-btn" type="button" onclick="openAdmin()">🔧 Admin</button>
     </div>
   </header>
 
@@ -168,6 +169,43 @@
 
       <div role="region" aria-live="assertive" id="message" style="margin-top:10px;color:#444;font-weight:600;"></div>
     </aside>
+
+    <!-- Admin overlay -->
+    <div id="adminOverlay" class="dashboard-overlay" aria-hidden="true" style="display:none; position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;justify-content:center;align-items:center;">
+      <div class="dashboard" style="width:90%;max-width:1000px;height:85%;border-radius:15px;overflow:hidden;display:flex;flex-direction:column;background:white;">
+        <div class="dashboard-header" style="background:#ff6600;color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;">
+          <h2>📊 Administration</h2>
+          <button class="close-dashboard" type="button" onclick="closeAdmin()" style="background:white;color:#ff6600;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;cursor:pointer;">Fermer</button>
+        </div>
+        <div class="dashboard-content" style="flex:1;padding:18px;overflow-y:auto;">
+          <div class="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px;">
+            <div class="stat-card" style="background:linear-gradient(135deg,#ff6600,#ff8833);color:white;padding:15px;border-radius:10px;text-align:center;">
+              <h3>Commandes totales</h3>
+              <div class="number" id="adminTotalOrders" style="font-size:28px;font-weight:bold;">0</div>
+            </div>
+            <div class="stat-card" style="background:linear-gradient(135deg,#ff6600,#ff8833);color:white;padding:15px;border-radius:10px;text-align:center;">
+              <h3>Chiffre d'affaires</h3>
+              <div class="number" id="adminTotalRevenue" style="font-size:28px;font-weight:bold;">0 FCFA</div>
+            </div>
+          </div>
+
+          <section style="margin-bottom:18px;">
+            <h3>➕ Mettre un plat en ligne</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;margin-top:8px;">
+              <input id="newDishName" type="text" placeholder="Nom du plat" style="padding:8px;border:1px solid #ccc;border-radius:8px;" />
+              <input id="newDishPrice" type="number" placeholder="Prix (FCFA)" style="padding:8px;border:1px solid #ccc;border-radius:8px;" />
+            </div>
+            <button type="button" onclick="addDish()" style="margin-top:10px;padding:10px 14px;background:#ff6600;color:white;border:none;border-radius:8px;cursor:pointer;">Ajouter le plat</button>
+            <div id="addDishMessage" style="margin-top:8px;color:#333;font-weight:600;"></div>
+          </section>
+
+          <section>
+            <h3>📋 Commandes</h3>
+            <div id="orderList" style="background:#f9f9f9;border-radius:10px;padding:12px;max-height:280px;overflow:auto;">Aucune commande.</div>
+          </section>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -179,6 +217,80 @@
     let selectedPayment = null;
 
     function formatFCFA(amount) { return amount.toLocaleString('fr-FR'); }
+
+    let orders = [];
+
+    function loadOrders() {
+      const saved = localStorage.getItem('graceDivineOrders');
+      if (saved) orders = JSON.parse(saved);
+      updateAdmin();
+    }
+
+    function saveOrders() {
+      localStorage.setItem('graceDivineOrders', JSON.stringify(orders));
+      updateAdmin();
+    }
+
+    function openAdmin() {
+      document.getElementById('adminOverlay').style.display = 'flex';
+      document.getElementById('adminOverlay').setAttribute('aria-hidden', 'false');
+      updateAdmin();
+    }
+
+    function closeAdmin() {
+      document.getElementById('adminOverlay').style.display = 'none';
+      document.getElementById('adminOverlay').setAttribute('aria-hidden', 'true');
+    }
+
+    function addDish() {
+      const name = document.getElementById('newDishName').value.trim();
+      const price = Number(document.getElementById('newDishPrice').value);
+      const msg = document.getElementById('addDishMessage');
+      if (!name || !price || price <= 0) {
+        msg.textContent = 'Veuillez saisir un nom et un prix valides.';
+        msg.style.color = '#c82333';
+        return;
+      }
+      const menuGrid = document.getElementById('menuGrid');
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.dataset.name = name;
+      card.dataset.price = price;
+      card.innerHTML = `
+        <img src="https://images.unsplash.com/photo-1498575207490-31f0b8c255b8?auto=format&fit=crop&w=800&q=80" alt="${name}" loading="lazy" />
+        <div class="card-content">
+          <h3>${name}</h3>
+          <p class="price">${price.toLocaleString('fr-FR')} FCFA</p>
+          <button type="button" onclick="addToCart('${name}', ${price})">➕ Commander</button>
+        </div>
+      `;
+      menuGrid.appendChild(card);
+      document.getElementById('newDishName').value = '';
+      document.getElementById('newDishPrice').value = '';
+      msg.textContent = `Plat "${name}" ajouté à la carte.`;
+      msg.style.color = '#155724';
+    }
+
+    function updateAdmin() {
+      const totalOrders = orders.length;
+      const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+      document.getElementById('adminTotalOrders').textContent = totalOrders;
+      document.getElementById('adminTotalRevenue').textContent = `${totalRevenue.toLocaleString('fr-FR')} FCFA`;
+      const orderList = document.getElementById('orderList');
+      if (!orders.length) {
+        orderList.innerHTML = 'Aucune commande.';
+        return;
+      }
+      orderList.innerHTML = orders.map(o =>
+        `<div style="border-bottom:1px solid #ddd; margin-bottom:8px; padding-bottom:8px;">
+          <strong>#${o.id}</strong> - ${o.date}<br>
+          ${o.items.map(i => `${i.name} x${i.qty}`).join(', ')}<br>
+          Total: ${o.total.toLocaleString('fr-FR')} FCFA<br>
+          Paiement: ${o.paymentMethod}<br>
+          Téléphone: ${o.phone}
+        </div>`
+      ).join('');
+    }
 
     function renderCart() {
       const cartItems = document.getElementById('cartItems');
@@ -261,6 +373,18 @@
         `\n💰 Total : ${formatFCFA(total)} FCFA\n` +
         `\nMerci pour votre commande !`;
 
+      // Sauvegarde de la commande pour l'admin
+      const order = {
+        id: ticketId,
+        date: orderTime,
+        items: cart.map(item => ({ name: item.name, qty: item.qty, price: item.price })),
+        total,
+        paymentMethod: selectedPayment,
+        phone,
+      };
+      orders.unshift(order);
+      saveOrders();
+
       document.getElementById('ticketSection').style.display = 'block';
       document.getElementById('ticketContent').textContent = ticketText;
 
@@ -287,6 +411,7 @@
 
     document.getElementById('phoneNumber').addEventListener('input', renderCart);
 
+    loadOrders();
     renderCart();
   </script>
 </body>
