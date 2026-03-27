@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Site de commande en ligne pour le restaurant Grace divine, avec menu, panier, paiement et dashboard admin.">
-  <title>Restaurant Grace divine 🍽️</title>
+  <meta name="description" content="Site de commande en ligne pour le restaurant, avec menu, panier, paiement et dashboard admin.">
+  <title>Mon Restaurant 🍽️</title>
 
   <style>
     :root {
@@ -62,10 +62,10 @@
 <body>
   <header>
     <div class="topbar">
-      <div class="brand">Grace <span>Divine</span></div>
+      <div class="brand">Mon <span>Restaurant</span></div>
       <nav class="hero-links" aria-label="Liens rapides">
-        <a href="https://www.opentable.fr/r/grace-divine" target="_blank" rel="noopener">Réservation</a>
-        <a href="https://www.google.com/maps/search/Restaurant+Grace+Divine+Abidjan" target="_blank" rel="noopener">Itinéraire</a>
+        <a href="https://www.opentable.fr/r/mon-restaurant" target="_blank" rel="noopener">Réservation</a>
+        <a href="https://www.google.com/maps/search/Restaurant+Mon+Restaurant+Abidjan" target="_blank" rel="noopener">Itinéraire</a>
         <a href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook</a>
       </nav>
       <button class="admin-btn" type="button" onclick="openAdmin()"> Publier</button>
@@ -162,7 +162,7 @@
 
       <div class="cart-actions">
         <button id="clearCart" type="button" onclick="clearCart()">🗑️ Vider le panier</button>
-        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250713172906" target="_blank" rel="noopener" onclick="return sendWhatsAppOrder(event);">📩 Commander via WhatsApp</a>
+        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250170084562" target="_blank" rel="noopener" onclick="return sendWhatsAppOrder(event);">📩 Commander via WhatsApp</a>
         <button id="downloadTicket" type="button" onclick="downloadTicketImage()" style="background:#333;color:white;">🖼️ Télécharger ticket .PNG</button>
       </div>
 
@@ -220,7 +220,7 @@
   </main>
 
   <footer class="footer">
-    <p>📍 10 Rue des Héros, Abidjan, Côte d'Ivoire · ☎️ +225 07 0000 0000 · <a href="https://www.opentable.fr/" target="_blank" rel="noopener">Réserver</a></p>
+    <p>📍 Treichville, Abidjan, Côte d'Ivoire · ☎️ +225 01 7008 4562 · <a href="https://wa.me/2250170084562" target="_blank" rel="noopener">Réserver mon restaurant</a></p>
   </footer>
 
   <script>
@@ -373,7 +373,7 @@
       });
       text += `%0ATotal: ${formatFCFA(total)} FCFA`;
       if (selectedPayment) text += `%0APaiement: ${selectedPayment}`;
-      whatsapp.href = `https://wa.me/2250713172906?text=${encodeURIComponent(text)}`;
+      whatsapp.href = `https://wa.me/2250170084562?text=${encodeURIComponent(text)}`;
     }
 
     function createTicketCanvas(ticketText) {
@@ -534,7 +534,7 @@
       document.getElementById('ticketContent').textContent = ticketText;
 
       const whatsappLink = document.getElementById('whatsappLink');
-      whatsappLink.href = `https://wa.me/2250713172906?text=${encodeURIComponent(ticketText)}`;
+      whatsappLink.href = `https://wa.me/2250170084562?text=${encodeURIComponent(ticketText)}`;
 
       alert('Un ticket a été généré et sera partagé via WhatsApp.');
 
