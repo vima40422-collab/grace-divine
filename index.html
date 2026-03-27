@@ -161,6 +161,11 @@
         <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250143906867" target="_blank" rel="noopener" onclick="return submitOrder();">📩 Commander via WhatsApp</a>
       </div>
 
+      <div class="ticket" id="ticketSection" aria-live="polite" style="margin-top: 14px; padding: 12px; background: #fff9eb; border: 1px solid #ffd59a; border-radius: 8px; display: none;">
+        <h3 style="margin:0 0 8px;">🎫 Ticket de commande</h3>
+        <pre id="ticketContent" style="white-space: pre-wrap; margin: 0; font-size: 0.95rem; color: #523a0d;"></pre>
+      </div>
+
       <div role="region" aria-live="assertive" id="message" style="margin-top:10px;color:#444;font-weight:600;"></div>
     </aside>
   </main>
@@ -242,8 +247,33 @@
       if (!selectedPayment) { alert('Choisissez un moyen de paiement.'); return false; }
       const phone = document.getElementById('phoneNumber').value.trim();
       if (!phone) { alert('Veuillez renseigner votre numéro de téléphone.'); return false; }
-      alert('Votre commande est prête et le chat WhatsApp s\'ouvrira pour confirmation.');
-      clearCart();
+
+      const ticketId = `GD-${Date.now()}`;
+      const orderTime = new Date().toLocaleString('fr-FR');
+      const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+
+      const ticketLines = cart.map(item => `- ${item.name} x${item.qty} : ${formatFCFA(item.price * item.qty)} FCFA`).join('\n');
+      const ticketText = `🎫 Ticket de commande #${ticketId}\n` +
+        `🕒 Date : ${orderTime}\n` +
+        `📱 Client : ${phone}\n` +
+        `💳 Paiement : ${selectedPayment}\n` +
+        `\nCommande :\n${ticketLines}\n` +
+        `\n💰 Total : ${formatFCFA(total)} FCFA\n` +
+        `\nMerci pour votre commande !`;
+
+      document.getElementById('ticketSection').style.display = 'block';
+      document.getElementById('ticketContent').textContent = ticketText;
+
+      const whatsappLink = document.getElementById('whatsappLink');
+      whatsappLink.href = `https://wa.me/2250143906867?text=${encodeURIComponent(ticketText)}`;
+
+      alert('Un ticket a été généré et sera partagé via WhatsApp.');
+
+      // Laisser le temps à l'utilisateur de voir le ticket avant de vider le panier
+      setTimeout(() => {
+        clearCart();
+      }, 1000);
+
       return true;
     }
 
