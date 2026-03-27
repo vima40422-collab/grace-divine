@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Site de commande en ligne pour le restaurant Chez Aya, avec menu, panier, paiement et dashboard admin.">
-  <title>Restaurant Chez Aya 🍽️</title>
+  <meta name="description" content="Site de commande en ligne pour le restaurant Grace divine, avec menu, panier, paiement et dashboard admin.">
+  <title>Restaurant Grace divine 🍽️</title>
 
   <style>
     :root {
@@ -62,10 +62,10 @@
 <body>
   <header>
     <div class="topbar">
-      <div class="brand">Chez <span>Aya</span></div>
+      <div class="brand">Grace <span>Divine</span></div>
       <nav class="hero-links" aria-label="Liens rapides">
-        <a href="https://www.opentable.fr/r/chez-aya" target="_blank" rel="noopener">Réservation</a>
-        <a href="https://www.google.com/maps/search/Restaurant+Chez+Aya+Abidjan" target="_blank" rel="noopener">Itinéraire</a>
+        <a href="https://www.opentable.fr/r/grace-divine" target="_blank" rel="noopener">Réservation</a>
+        <a href="https://www.google.com/maps/search/Restaurant+Grace+Divine+Abidjan" target="_blank" rel="noopener">Itinéraire</a>
         <a href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook</a>
       </nav>
     </div>
@@ -158,7 +158,7 @@
 
       <div class="cart-actions">
         <button id="clearCart" type="button" onclick="clearCart()">🗑️ Vider le panier</button>
-        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250700000000" target="_blank" rel="noopener" onclick="return submitOrder();">📩 Commander via WhatsApp</a>
+        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250143906867" target="_blank" rel="noopener" onclick="return submitOrder();">📩 Commander via WhatsApp</a>
       </div>
 
       <div role="region" aria-live="assertive" id="message" style="margin-top:10px;color:#444;font-weight:600;"></div>
@@ -207,7 +207,7 @@
       text += `%0ATotal: ${formatFCFA(total)} FCFA`;
       if (selectedPayment) text += `%0APaiement: ${selectedPayment}`;
       if (phone) text += `%0ATéléphone: ${phone}`;
-      whatsapp.href = `https://wa.me/2250700000000?text=${encodeURIComponent(text)}`;
+      whatsapp.href = `https://wa.me/2250143906867?text=${encodeURIComponent(text)}`;
     }
 
     function addToCart(name, price) {
