@@ -162,7 +162,7 @@
 
       <div class="cart-actions">
         <button id="clearCart" type="button" onclick="clearCart()">🗑️ Vider le panier</button>
-        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250143906867" target="_blank" rel="noopener" onclick="return submitOrder();">📩 Commander via WhatsApp</a>
+        <a id="whatsappLink" class="whatsapp" href="https://wa.me/2250143906867" target="_blank" rel="noopener" onclick="return sendWhatsAppOrder(event);">📩 Commander via WhatsApp</a>
         <button id="downloadTicket" type="button" onclick="downloadTicketImage('png')" style="background:#333;color:white;">🖼️ Télécharger ticket .PNG</button>
         <button id="downloadTicketJpg" type="button" onclick="downloadTicketImage('jpg')" style="background:#555;color:white;">📷 Télécharger ticket .JPG</button>
       </div>
@@ -227,6 +227,8 @@
   <script>
     let cart = [];
     let selectedPayment = null;
+    let lastTicketImageDataUrl = '';
+    let lastTicketBlob = null;
 
     function formatFCFA(amount) { return amount.toLocaleString('fr-FR'); }
 
@@ -375,6 +377,89 @@
       whatsapp.href = `https://wa.me/2250143906867?text=${encodeURIComponent(text)}`;
     }
 
+    function createTicketCanvas(ticketText) {
+      const lines = ticketText.split('\n');
+      const width = 760;
+      const lineHeight = 28;
+      const padding = 30;
+      const height = padding * 2 + lineHeight * (lines.length + 3);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = '#ff6600';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(5, 5, width - 10, height - 10);
+
+      ctx.fillStyle = '#ff6600';
+      ctx.font = 'bold 24px "Segoe UI", sans-serif';
+      ctx.fillText('🍽️ Restaurant Grace Divine', padding, padding);
+
+      ctx.fillStyle = '#555';
+      ctx.font = '16px "Segoe UI", sans-serif';
+      ctx.fillText('✨ Ticket de commande stylisé pour WhatsApp', padding, padding + lineHeight);
+
+      ctx.fillStyle = '#333';
+      ctx.font = '16px "Segoe UI", sans-serif';
+
+      let y = padding + lineHeight * 3;
+      lines.forEach(line => {
+        ctx.fillText(line, padding, y);
+        y += lineHeight;
+      });
+
+      return canvas;
+    }
+
+    function generateTicketImageFromText(ticketText) {
+      const canvas = createTicketCanvas(ticketText);
+      lastTicketImageDataUrl = canvas.toDataURL('image/png');
+      canvas.toBlob(blob => { lastTicketBlob = blob; }, 'image/png', 0.92);
+      return canvas;
+    }
+
+    async function copyTicketImageToClipboard() {
+      if (!lastTicketBlob || !navigator.clipboard || !window.ClipboardItem) {
+        return false;
+      }
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ [lastTicketBlob.type]: lastTicketBlob })]);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function sendWhatsAppOrder(event) {
+      event.preventDefault();
+      if (!submitOrder()) {
+        return false;
+      }
+
+      const whatsappUrl = document.getElementById('whatsappLink').href;
+      const notification = document.getElementById('message');
+
+      if (lastTicketBlob) {
+        copyTicketImageToClipboard().then(copied => {
+          if (copied) {
+            notification.textContent = '✅ Ticket image copié. Collez dans WhatsApp, puis envoyez.';
+          } else {
+            notification.textContent = '⚠️ Impossible de copier automatiquement l’image. Téléchargez et joignez le PNG/JPG.';
+          }
+          window.open(whatsappUrl, '_blank');
+        });
+      } else {
+        notification.textContent = '⚠️ Génération du ticket image impossible. Téléchargez le ticket PNG/JPG manuellement.';
+        window.open(whatsappUrl, '_blank');
+      }
+      return false;
+    }
+
     function addToCart(name, price) {
       const article = cart.find(item => item.name === name);
       if (article) { article.qty += 1; }
@@ -415,19 +500,22 @@
       const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
       const ticketLines = cart.map(item => `- ${item.name} x${item.qty} : ${formatFCFA(item.price * item.qty)} FCFA`).join('\n');
-      const ticketText = `Restaurant Grace Divine\n` +
-        `Cuisine ivoirienne authentique et service rapide\n` +
+      const ticketText = `🍽️ Restaurant Grace Divine\n` +
+        `✨ Cuisine ivoirienne authentique et service rapide\n` +
         `---\n` +
-        `Ticket de commande #${ticketId}\n` +
-        `Date : ${orderTime}\n` +
-        `Client : ${customerName}\n` +
-        `Téléphone : ${phone}\n` +
-        `Paiement : ${selectedPayment}\n` +
+        `🎟️ Ticket de commande #${ticketId}\n` +
+        `🕒 Date : ${orderTime}\n` +
+        `👤 Client : ${customerName}\n` +
+        `📱 Téléphone : ${phone}\n` +
+        `💳 Paiement : ${selectedPayment}\n` +
         `---\n` +
-        `Commande :\n${ticketLines}\n` +
+        `🛒 Commande :\n${ticketLines}\n` +
         `---\n` +
-        `Total : ${formatFCFA(total)} FCFA\n` +
-        `Merci pour votre commande !`;
+        `💰 Total : ${formatFCFA(total)} FCFA\n` +
+        `🙏 Merci pour votre commande !`;
+
+      // Génération de l'image ticket (PNG par défaut)
+      generateTicketImageFromText(ticketText);
 
       // Sauvegarde de la commande pour l'admin
       const order = {
@@ -472,44 +560,7 @@
         return;
       }
 
-      const lines = ticketText.split('\n');
-      const width = 700;
-      const lineHeight = 28;
-      const padding = 30;
-      const height = padding * 2 + lineHeight * (lines.length + 4);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, width, height);
-
-      // bordure
-      ctx.strokeStyle = '#ff6600';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(5, 5, width - 10, height - 10);
-
-      ctx.fillStyle = '#333';
-      ctx.font = 'bold 22px "Segoe UI", sans-serif';
-      ctx.fillText('Restaurant Grace Divine', padding, padding + 0 * lineHeight);
-
-      ctx.font = '16px "Segoe UI", sans-serif';
-      ctx.fillStyle = '#555';
-      ctx.fillText('Cuisine ivoirienne authentique', padding, padding + lineHeight);
-
-      ctx.fillStyle = '#222';
-      ctx.font = 'bold 18px "Segoe UI", sans-serif';
-      ctx.fillText('TICKET', padding, padding + lineHeight * 2 + 4);
-
-      ctx.font = '16px "Segoe UI", sans-serif';
-      let y = padding + lineHeight * 3 + 10;
-      lines.forEach(line => {
-        ctx.fillText(line, padding, y);
-        y += lineHeight;
-      });
-
+      const canvas = createTicketCanvas(ticketText);
       const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
       const extension = format === 'jpg' ? 'jpg' : 'png';
       const dataUrl = canvas.toDataURL(mime, 0.92);
